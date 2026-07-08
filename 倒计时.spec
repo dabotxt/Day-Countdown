@@ -1,12 +1,26 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
+
+
+webview_datas = collect_data_files('webview', subdir='lib')
+webview_binaries = collect_dynamic_libs('webview')
+
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[],
-    datas=[],
-    hiddenimports=[],
+    binaries=webview_binaries,
+    datas=webview_datas,
+    hiddenimports=[
+        'clr',
+        'pythonnet',
+        'webview.platforms.win32',
+        'webview.platforms.winforms',
+        'webview.platforms.edgechromium',
+        'webview.platforms.mshtml',
+        'tkinter',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
