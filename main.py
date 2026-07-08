@@ -1,3 +1,5 @@
+import base64
+import mimetypes
 from pathlib import Path
 
 import webview
@@ -642,7 +644,7 @@ HTML = """<!DOCTYPE html>
             </div>
             <div class="media-row">
                 <label></label>
-                <div class="media-name">支持 jpg、png、gif、webp、mp4、mov、webm</div>
+                <div class="media-name">图片会内嵌保存，视频使用本地路径</div>
                 <button class="small-dialog-button" id="clearBgMedia" type="button">清除</button>
             </div>
             <div class="dialog-error" id="bgSettingsError"></div>
@@ -1280,21 +1282,30 @@ class TimerApi:
         image_suffixes = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'}
         video_suffixes = {'.mp4', '.mov', '.m4v', '.webm'}
 
-        if suffix in image_suffixes:
-            media_type = 'image'
-        elif suffix in video_suffixes:
-            media_type = 'video'
-        else:
-            return {'error': '请选择支持的图片或视频文件。'}
-
         if not path.exists():
             return {'error': '文件不存在，请重新选择。'}
 
-        return {
-            'url': path.as_uri(),
-            'type': media_type,
-            'name': path.name,
-        }
+        if suffix in image_suffixes:
+            mime_type = mimetypes.guess_type(path.name)[0] or 'image/jpeg'
+            try:
+                data = base64.b64encode(path.read_bytes()).decode('ascii')
+            except OSError:
+                return {'error': '图片读取失败，请重新选择。'}
+            return {
+                'url': f'data:{mime_type};base64,{data}',
+                'type': 'image',
+                'name': path.name,
+            }
+
+        if suffix in video_suffixes:
+            return {
+                'url': path.as_uri(),
+                'type': 'video',
+                'name': path.name,
+            }
+
+        return {'error': '请选择支持的图片或视频文件。'}
+
 
 
 def main():
